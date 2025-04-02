@@ -1,14 +1,6 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
-function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    const giorno = String(date.getDate()).padStart(2, '0');
-    const mese = String(date.getMonth() + 1).padStart(2, '0');
-    const anno = String(date.getFullYear()).slice(-2);
-    return `${giorno}/${mese}/${anno}`;
-}
-
 export function prepareExportData(filteredData, cropFilter, selectedOptions) {
     const latest = filteredData.at(-1);
     const cropList = latest?.piante || [];
@@ -27,10 +19,10 @@ export function prepareExportData(filteredData, cropFilter, selectedOptions) {
             raccoltaDate.setDate(seminaDate.getDate() + crop.tempoRaccolto);
 
             return {
-                nome: crop.nome,
-                quantità: crop.quantità,
-                'seminato': formatDate(seminaDate),
-                'raccolto stimato': formatDate(raccoltaDate),
+                'nome': crop.nome,
+                'quantità (pz)': crop.quantità,
+                'seminato': seminaDate.toISOString().split('T')[0],
+                'raccolto stimato': raccoltaDate.toISOString().split('T')[0],
                 'ricavo (€)': crop.ricavo,
                 'costo (€)': crop.costo
             };
@@ -39,105 +31,111 @@ export function prepareExportData(filteredData, cropFilter, selectedOptions) {
         files.push({
             filename: `esportazione_dati_agronomia_colture_piantate.csv`,
             data,
-            headers: ['nome', 'quantità', 'seminato', 'raccolto stimato', 'ricavo (€)', 'costo (€)']
+            headers: ['nome', 'quantità (pz)', 'seminato', 'raccolto stimato', 'ricavo (€)', 'costo (€)']
         });
     }
+
 
     if (selectedOptions.includes('qualita_suolo')) {
         files.push({
             filename: `esportazione_dati_agronomia_qualita_del_suolo.csv`,
-            data: [{
-                'pH suolo': latest.phSuolo,
-                'N (mg/kg)': latest.nutrienteN,
-                'P (mg/kg)': latest.nutrienteP,
-                'K (mg/kg)': latest.nutrienteK,
-                'Umidità suolo (%)': latest.umiditaSuolo
-            }],
-            headers: ['pH suolo', 'N (mg/kg)', 'P (mg/kg)', 'K (mg/kg)', 'Umidità suolo (%)']
+            data: filteredData.map(item => ({
+                data: item.timestamp.split('T')[0],
+                'pH suolo': item.phSuolo,
+                'N (mg/kg)': item.nutrienteN,
+                'P (mg/kg)': item.nutrienteP,
+                'K (mg/kg)': item.nutrienteK,
+                'Umidità suolo (%)': item.umiditaSuolo
+            })),
+            headers: ['data', 'pH suolo', 'N (mg/kg)', 'P (mg/kg)', 'K (mg/kg)', 'Umidità suolo (%)']
         });
     }
 
     if (selectedOptions.includes('sostenibilita')) {
         files.push({
             filename: `esportazione_dati_agronomia_sostenibilita.csv`,
-            data: [{
-                'Consumo energetico per kg (kWh/kg)': latest.consumoEnergeticoPerKg,
-                'CO2 per unità (kg)': latest.co2PerUnita,
-                'Acqua riciclata (%)': latest.acquaRiciclataPercentuale
-            }],
-            headers: ['Consumo energetico per kg (kWh/kg)', 'CO2 per unità (kg)', 'Acqua riciclata (%)']
+            data: filteredData.map(item => ({
+                data: item.timestamp.split('T')[0],
+                'Energia per kg (kWh/kg)': item.consumoEnergeticoPerKg,
+                'CO2 (kg/unità)': item.co2PerUnita,
+                'Acqua riciclata (%)': item.acquaRiciclataPercentuale
+            })),
+            headers: ['data', 'Energia per kg (kWh/kg)', 'CO2 (kg/unità)', 'Acqua riciclata (%)']
         });
     }
 
     if (selectedOptions.includes('consumi')) {
         files.push({
             filename: `esportazione_dati_agronomia_consumi.csv`,
-            data: [{
-                'Consumo acqua (L)': latest.consumoAcqua,
-                'Consumo elettricità (kWh)': latest.consumoElettricita,
-                'Consumo fertilizzante (kg)': latest.consumoFertilizzante,
-                'Consumo pesticida (kg)': latest.consumoPesticida
-            }],
-            headers: ['Consumo acqua (L)', 'Consumo elettricità (kWh)', 'Consumo fertilizzante (kg)', 'Consumo pesticida (kg)']
+            data: filteredData.map(item => ({
+                data: item.timestamp.split('T')[0],
+                'Acqua (L)': item.consumoAcqua,
+                'Elettricità (kWh)': item.consumoElettricita,
+                'Fertilizzante (kg)': item.consumoFertilizzante,
+                'Pesticida (L)': item.consumoPesticida
+            })),
+            headers: ['data', 'Acqua (L)', 'Elettricità (kWh)', 'Fertilizzante (kg)', 'Pesticida (L)']
         });
     }
 
     if (selectedOptions.includes('costi')) {
         files.push({
             filename: `esportazione_dati_agronomia_costi.csv`,
-            data: [{
-                'Manutenzione (€)': latest.costoManutenzione,
-                'Attrezzature (€)': latest.costoAttrezzature,
-                'Manodopera (€)': latest.costoManodopera
-            }],
-            headers: ['Manutenzione (€)', 'Attrezzature (€)', 'Manodopera (€)']
+            data: filteredData.map(item => ({
+                data: item.timestamp.split('T')[0],
+                'Manutenzione (€)': item.costoManutenzione,
+                'Attrezzature (€)': item.costoAttrezzature,
+                'Manodopera (€)': item.costoManodopera
+            })),
+            headers: ['data', 'Manutenzione (€)', 'Attrezzature (€)', 'Manodopera (€)']
         });
     }
 
     if (selectedOptions.includes('ricavi')) {
         files.push({
             filename: `esportazione_dati_agronomia_ricavi.csv`,
-            data: [{
-                'Vendite al dettaglio (€)': latest.ricavoDettaglio,
-                'Vendite ai grossisti (€)': latest.ricavoGrossisti,
-                'Vendite online (€)': latest.ricavoOnline
-            }],
-            headers: ['Vendite al dettaglio (€)', 'Vendite ai grossisti (€)', 'Vendite online (€)']
+            data: filteredData.map(item => ({
+                data: item.timestamp.split('T')[0],
+                'Vendita al dettaglio (€)': item.ricavoDettaglio,
+                'Grossisti (€)': item.ricavoGrossisti,
+                'Vendita online (€)': item.ricavoOnline
+            })),
+            headers: ['data', 'Vendita al dettaglio (€)', 'Grossisti (€)', 'Vendita online (€)']
         });
     }
 
     if (selectedOptions.includes('meteo')) {
         files.push({
             filename: `esportazione_dati_agronomia_meteo.csv`,
-            data: [{
-                'Condizione': latest.meteoCondizione,
-                'Temperatura (°C)': latest.temperatura,
-                'Umidità (%)': latest.umidita,
-                'Precipitazioni (mm)': latest.precipitazioni,
-                'Vento (km/h)': latest.vento
-            }],
-            headers: ['Condizione', 'Temperatura (°C)', 'Umidità (%)', 'Precipitazioni (mm)', 'Vento (km/h)']
+            data: filteredData.map(item => ({
+                data: item.timestamp.split('T')[0],
+                'Condizione': item.meteoCondizione,
+                'Temperatura (°C)': item.temperatura,
+                'Umidità (%)': item.umidita,
+                'Precipitazioni (mm)': item.precipitazioni,
+                'Vento (km/h)': item.vento
+            })),
+            headers: ['data', 'Condizione', 'Temperatura (°C)', 'Umidità (%)', 'Precipitazioni (mm)', 'Vento (km/h)']
         });
     }
 
     if (selectedOptions.includes('produzione')) {
-        const data = (cropToExport
-                ? filteredData.filter(d => d.pianta === cropToExport)
-                : filteredData
-        ).map(item => ({
-            'Data': formatDate(item.timestamp),
-            'Pianta': item.pianta,
-            'Temperatura (°C)': item.temperatura,
-            'Umidità (%)': item.umidita,
-            'Precipitazioni (mm)': item.precipitazioni,
-            'Raccolto (kg)': item.raccolto,
-            'Tempo crescita (gg)': item.tempoCrescita
-        }));
+        const data = cropToExport
+            ? filteredData.filter(d => d.pianta === cropToExport)
+            : filteredData;
 
         files.push({
             filename: `esportazione_dati_agronomia_dati_produzione.csv`,
-            data,
-            headers: ['Data', 'Pianta', 'Temperatura (°C)', 'Umidità (%)', 'Precipitazioni (mm)', 'Raccolto (kg)', 'Tempo crescita (gg)']
+            data: data.map(d => ({
+                data: d.timestamp.split('T')[0],
+                'Pianta': d.pianta,
+                'Temperatura (°C)': d.temperatura,
+                'Umidità (%)': d.umidita,
+                'Precipitazioni (mm)': d.precipitazioni,
+                'Raccolto (kg)': d.raccolto,
+                'Tempo di crescita (gg)': d.tempoCrescita
+            })),
+            headers: ['data', 'Pianta', 'Temperatura (°C)', 'Umidità (%)', 'Precipitazioni (mm)', 'Raccolto (kg)', 'Tempo di crescita (gg)']
         });
     }
 
