@@ -1279,6 +1279,15 @@ label.exportOptionTitle {
     width: 100%;
   }
 
+  .crop-dropdown label {
+    width: 50%;
+    float: left;
+  }
+
+  .crop-dropdown label:first-child {
+    width: 100%;
+  }
+
 }
 
 
