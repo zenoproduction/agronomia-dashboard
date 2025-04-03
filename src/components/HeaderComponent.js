@@ -65,7 +65,7 @@ const HeaderComponent = ({
             <div className="header-top">
                 <div className="header-left">
                     <div className="logo-title">
-                        <img src="leaf-icon.png" alt="Agronomia" className="logo"/>
+                        <img src={`${process.env.PUBLIC_URL}/leaf-icon.png`} alt="Agronomia" className="logo"/>
                         <h1>Agronomia</h1>
                     </div>
                 </div>
